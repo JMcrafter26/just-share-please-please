@@ -13,7 +13,7 @@
 	];
 
 	/** @type {string | undefined} */
-	let currentId;
+	let currentId = $state(undefined);
 	/** current raw markdown source, kept so the download/Obsidian links can use it */
 	let rawContent = $state('');
 	let bodyHtml = $state('<div class="center-message"><p>Loading...</p></div>');
@@ -26,6 +26,9 @@
 	/** @type {'idle' | 'sending' | 'done' | 'error'} */
 	let reportStatus = $state('idle');
 	let reportError = $state('');
+
+	let tosOpen = $state(false);
+	let privacyOpen = $state(false);
 
 	const md = createMarkdownRenderer(() => currentId);
 
@@ -155,16 +158,27 @@
 	<title>Just Share Please</title>
 </svelte:head>
 
+<a href={obsidianHref} class="obsidian-top-button" title="Import this note into Obsidian">
+	<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true">
+		<!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+		<path d="M270.3 384.3C306.4 376.1 340.6 373.3 371.6 385C403.4 396.9 433.3 424.6 458.3 481C450.2 498.7 445.9 517.9 443.6 534.8C440.5 557.7 418.2 575.5 395.9 569.4C364.2 560.7 327.6 547.1 294.6 544.5C290.2 544.2 244 540.7 244 540.7C242.3 540.6 240.6 540.3 238.9 539.9C270.4 475.7 277.1 424.8 270.2 384.5zM183 283.5C205.3 298.3 232.5 321.3 247.1 357.1C263.2 396.5 264.9 452.8 225.5 533.2C224.5 532.4 223.4 531.5 222.5 530.5L135.4 440.8C125.9 431 123.3 416.4 128.9 403.9C129.5 402.6 173.5 305.6 183 283.5zM447.3 192.2C452.2 198.4 454.7 206.2 454.7 214.1C454.8 234.9 456.5 277.7 468 305.3C479.2 332.1 499.8 361.1 510.5 375.3C514.6 380.8 515.3 388.2 511.8 394C504.2 406.8 489.2 431.5 468 463.2C467.7 463.6 467.4 464.1 467.2 464.5C442 412.3 411.3 383.8 376.8 370.9C367.2 367.3 357.3 364.9 347.4 363.6C329.6 317.8 324.2 283.9 325.4 257.2C326.6 229.8 334.6 209.4 343.6 190.9C352.5 172.8 363.4 155 368.5 135.2C371.7 122.7 372.7 109.4 370.2 94.3L447.3 192.3zM312.2 78.1C322.5 68.9 336.8 67.3 348.5 72.6C358.1 97.2 358.2 115.4 354.1 131.4C349.5 149.2 340 164.4 330.2 184.2C320.6 203.7 311.8 226.2 310.5 256.5C309.3 284.4 314.6 318.4 330.9 362.3C309.9 361.7 288.4 364.9 267.2 369.7C265.5 363.3 263.4 357.3 261.1 351.5C243.8 309.3 211.2 283.6 187 268.2C190.1 249.5 195.2 212.8 198.6 190.7C199.8 183.1 203.5 176.1 209.3 170.9L312.2 78.1z"/>
+	</svg>
+	<span>Import into Obsidian</span>
+</a>
+
 <div class="content">
 	<div id="main" bind:this={mainEl}>{@html bodyHtml}</div>
 	<div id="footer">
-		Created using <a href="./">Just Share Please</a> for
-		<a href="https://obsidian.md">Obsidian</a> -
 		<a href={downloadHref} download="{pageTitle}.md">Download Markdown</a> -
-		<a href={obsidianHref}>Open in Obsidian</a>
+		<a href={obsidianHref}>Import into Obsidian</a>
 		{#if currentId}
 			- <button type="button" class="link-button" onclick={openReport}>Report</button>
 		{/if}
+		<br />
+				Created using <a href="./">Just Share Please</a> for
+		<a href="https://obsidian.md">Obsidian</a>
+		- <button type="button" class="link-button" onclick={() => (tosOpen = true)}>Terms of Service</button>
+		- <button type="button" class="link-button" onclick={() => (privacyOpen = true)}>Privacy Policy</button>
 	</div>
 </div>
 
@@ -206,6 +220,73 @@
 					</button>
 				</div>
 			{/if}
+		</div>
+	</div>
+{/if}
+
+{#if tosOpen}
+	<div class="modal-overlay" onclick={() => (tosOpen = false)} role="presentation">
+		<div
+			class="modal modal-legal"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Terms of Service"
+		>
+			<h3>Terms of Service</h3>
+			<h4>1. Service Provision & Disclaimer</h4>
+			<p>
+				Just Share Please is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, express or implied.
+				The service operator makes no guarantees regarding availability, reliability, security, or data retention.
+			</p>
+			<h4>2. Limitation of Liability</h4>
+			<p>
+				To the maximum extent permitted by applicable law, the owner and operator of this service shall NOT be held liable for any direct, indirect, incidental, special, consequential, or exemplary damages, including but not limited to loss of data, loss of profits, service interruption, server downtime, or any issues arising from the use of or inability to use this service.
+			</p>
+			<h4>3. User Responsibility & Content Restrictions</h4>
+			<p>
+				You are solely responsible for all content you share using this service. You agree not to upload or share any content that is illegal, abusive, defamatory, copyright-infringing, contains malware, or violates the privacy of others.
+			</p>
+			<h4>4. Content Removal</h4>
+			<p>
+				We reserve the right to remove any shared note or disable access to content at any time, for any reason, without prior notice.
+			</p>
+			<div class="modal-actions">
+				<button type="button" onclick={() => (tosOpen = false)}>Close</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if privacyOpen}
+	<div class="modal-overlay" onclick={() => (privacyOpen = false)} role="presentation">
+		<div
+			class="modal modal-legal"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Privacy Policy"
+		>
+			<h3>Privacy Policy</h3>
+			<h4>1. Minimal Data Collection</h4>
+			<p>
+				We value your privacy. We do not collect personal identifying information. No user accounts, registration, email addresses, or cookies are required to share or view notes.
+			</p>
+			<h4>2. Shared Note Data</h4>
+			<p>
+				When you share a note, the raw text content is stored securely on the server to render it publicly for anyone with the shared link. Anyone with the unique link can view the note.
+			</p>
+			<h4>3. Privacy-Friendly Analytics</h4>
+			<p>
+				This website may collect basic, privacy-friendly usage metrics using tools like Plausible Analytics. Plausible Analytics is GDPR-compliant, cookie-less, and does not collect or track any personal identifying data.
+			</p>
+			<h4>4. IP Processing</h4>
+			<p>
+				IP addresses are processed temporarily in memory strictly for security and abuse mitigation (e.g. rate limiting note report submissions) and are never sold or shared with third parties.
+			</p>
+			<div class="modal-actions">
+				<button type="button" onclick={() => (privacyOpen = false)}>Close</button>
+			</div>
 		</div>
 	</div>
 {/if}

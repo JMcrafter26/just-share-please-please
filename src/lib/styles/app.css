@@ -1,4 +1,4 @@
-﻿html {
+html {
     position: relative;
     min-height: 100%;
 }
@@ -248,5 +248,52 @@ input[type=checkbox]:checked:after {
     .modal {
         background: #2a2a2a;
         color: #dadada;
+    }
+}
+
+/* --- top right obsidian button ---------------------------------------- */
+
+.obsidian-top-button {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    z-index: 90;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #ffffff !important;
+    background: #7c3aed;
+    border-radius: 20px;
+    text-decoration: none !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.obsidian-top-button:hover {
+    transform: translateY(-1px);
+}
+
+.modal-legal {
+    max-width: 580px;
+    max-height: 80vh;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.modal-legal h4 {
+    margin-top: 16px;
+    margin-bottom: 4px;
+    color: #7c3aed;
+}
+
+@media (max-width: 600px) {
+    .obsidian-top-button {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
     }
 }
