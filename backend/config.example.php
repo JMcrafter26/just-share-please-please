@@ -27,6 +27,9 @@ return [
     // across many different notes reported at once (seconds).
     'cooldown_global' => 15,
 
+    // Used to sign admin tokens (e.g. for single-click admin deletion link in emails).
+    'secret_key' => 'change-this-to-a-random-secret-key-1234567890',
+
     // Abuse limits on the report endpoint itself, independent of whether
     // a notification actually gets sent.
     'max_reports_per_ip_per_hour' => 10,

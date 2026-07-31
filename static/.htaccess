@@ -6,5 +6,8 @@ RewriteRule ^share/?$ share.php [QSA,L]
 # Rewrite /report/ to /report.php, preserving the query string
 RewriteRule ^report/?$ report.php [QSA,L]
 
+# Rewrite /delete/ to /delete.php, preserving the query string (admin only - token protected)
+RewriteRule ^delete/?$ delete.php [QSA,L]
+
 # Deny access to the data and includes directories
 RewriteRule ^(?:data|includes)\b.* - [F,L]

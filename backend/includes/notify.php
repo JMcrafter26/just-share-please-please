@@ -53,18 +53,43 @@ function set_cooldown_timestamp(PDO $db, string $key, int $timestamp): void {
  * broken mail server or webhook must never fail the report submission
  * itself, since the report is already safely stored in the database.
  */
-function notify_admin(array $config, string $noteId, string $reason, string $priority, string $message): void {
-    $link = rtrim((string) ($config['site_url'] ?? ''), '/') . '/#' . $noteId;
+function notify_admin(array $config, string $noteId, string $reason, string $priority, string $message, string $reporterIp = ''): void {
+    $baseUrl = rtrim((string) ($config['site_url'] ?? ''), '/');
+    $noteLink = $baseUrl . '/#' . $noteId;
+
+    $token = generate_admin_delete_token($config, $noteId);
+    $deleteLink = $baseUrl . '/delete?id=' . urlencode($noteId) . '&token=' . urlencode($token);
+
+    $dateTime = date('Y-m-d H:i:s T');
+
+    $detailsBlock = $message !== '' ? "\nDetails / Message:\n" . $message . "\n" : '';
+
     $summary = sprintf(
-        "A note was reported.\n\nPriority: %s\nReason: %s\nNote: %s\n%s",
+        "A note was reported on Just Share Please.\n\n" .
+        "Report Details:\n" .
+        "----------------------------------------\n" .
+        "Date & Time: %s\n" .
+        "Note ID:     %s\n" .
+        "Priority:    %s\n" .
+        "Reason:      %s\n" .
+        "Reporter IP: %s\n" .
+        "%s\n" .
+        "Action Links:\n" .
+        "----------------------------------------\n" .
+        "View Note:   %s\n" .
+        "Delete Note: %s\n",
+        $dateTime,
+        $noteId,
         strtoupper($priority),
         $reason,
-        $link,
-        $message !== '' ? "\nDetails:\n{$message}\n" : ''
+        $reporterIp !== '' ? $reporterIp : 'Unknown',
+        $detailsBlock,
+        $noteLink,
+        $deleteLink
     );
 
     try {
-        send_admin_email($config, "[Just Share Please] Note reported ({$priority})", $summary);
+        send_admin_email($config, "[Just Share Please] Note reported ({$priority}): {$reason}", $summary);
     } catch (\Throwable $e) {
         error_log('notify_admin: email failed: ' . $e->getMessage());
     }

@@ -121,3 +121,18 @@ function client_ip(): string
     // anyone spoof their rate-limit identity via a request header.
     return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
+
+function generate_admin_delete_token(array $config, string $id): string
+{
+    $secret = (string) ($config['secret_key'] ?? $config['admin_email'] ?? 'jsp_admin_secret_fallback');
+    return hash_hmac('sha256', $id, $secret);
+}
+
+function verify_admin_delete_token(array $config, string $id, mixed $token): bool
+{
+    if (!is_string($token) || strlen($token) !== 64) {
+        return false;
+    }
+    $expected = generate_admin_delete_token($config, $id);
+    return hash_equals($expected, strtolower($token));
+}

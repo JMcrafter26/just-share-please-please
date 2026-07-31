@@ -88,7 +88,7 @@ function handle_report(): void {
     ]);
 
     if (notification_cooldown_allows($db, $config, $noteId, $priority)) {
-        notify_admin($config, $noteId, $reason, $priority, $message);
+        notify_admin($config, $noteId, $reason, $priority, $message, $ip);
     }
 
     header('Content-Type: application/json');
