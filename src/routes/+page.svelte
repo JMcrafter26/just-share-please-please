@@ -1,7 +1,3 @@
-<svelte:head>
-	<title>Just Share Please</title>
-</svelte:head>
-
 <script>
 	import { onMount } from 'svelte';
 	import DOMPurify from 'dompurify';
@@ -62,7 +58,7 @@
 		} catch (err) {
 			bodyHtml = `<div class="center-message"><p>Error loading shared note with id <code>${escapeHtml(
 				id ?? ''
-			)}</code>: <code>${escapeHtml(String(err.message ?? err))}</code></p><p><a href="/">Home</a></p></div>`;
+			)}</code>: <code>${escapeHtml(String(err.message ?? err))}</code></p><p><a href="./">Home</a></p></div>`;
 			return;
 		}
 
@@ -85,7 +81,10 @@
 	}
 
 	function escapeHtml(s) {
-		return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+		return s.replace(
+			/[&<>"']/g,
+			(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+		);
 	}
 
 	// tiny local tick helper so we don't need to pull in extra svelte internals
@@ -146,18 +145,20 @@
 		if (typeof document !== 'undefined') document.title = pageTitle;
 	});
 
-	const downloadHref = $derived(
-		`data:text/plain;charset=utf-8,${encodeURIComponent(rawContent)}`
-	);
+	const downloadHref = $derived(`data:text/plain;charset=utf-8,${encodeURIComponent(rawContent)}`);
 	const obsidianHref = $derived(
 		`obsidian://new?name=${encodeURIComponent(pageTitle)}&content=${encodeURIComponent(rawContent)}`
 	);
 </script>
 
+<svelte:head>
+	<title>Just Share Please</title>
+</svelte:head>
+
 <div class="content">
 	<div id="main" bind:this={mainEl}>{@html bodyHtml}</div>
 	<div id="footer">
-		Created using <a href="/">Just Share Please</a> for
+		Created using <a href="./">Just Share Please</a> for
 		<a href="https://obsidian.md">Obsidian</a> -
 		<a href={downloadHref} download="{pageTitle}.md">Download Markdown</a> -
 		<a href={obsidianHref}>Open in Obsidian</a>
@@ -169,7 +170,13 @@
 
 {#if reportOpen}
 	<div class="modal-overlay" onclick={closeReport} role="presentation">
-		<div class="modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Report this note">
+		<div
+			class="modal"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Report this note"
+		>
 			{#if reportStatus === 'done'}
 				<p>Thanks - this note has been flagged for review.</p>
 				<div class="modal-actions">
@@ -191,7 +198,9 @@
 				</label>
 				{#if reportError}<p class="modal-error">{reportError}</p>{/if}
 				<div class="modal-actions">
-					<button type="button" onclick={closeReport} disabled={reportStatus === 'sending'}>Cancel</button>
+					<button type="button" onclick={closeReport} disabled={reportStatus === 'sending'}
+						>Cancel</button
+					>
 					<button type="button" onclick={submitReport} disabled={reportStatus === 'sending'}>
 						{reportStatus === 'sending' ? 'Sending…' : 'Submit report'}
 					</button>

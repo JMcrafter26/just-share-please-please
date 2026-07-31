@@ -7,6 +7,9 @@ require __DIR__ . '/includes/notes.php';
 send_common_headers();
 
 switch ($_SERVER['REQUEST_METHOD'] ?? '') {
+    case 'OPTIONS':
+        http_response_code(204);
+        exit;
     case 'GET':
         handle_get();
         break;
@@ -20,7 +23,7 @@ switch ($_SERVER['REQUEST_METHOD'] ?? '') {
         handle_delete();
         break;
     default:
-        header('Allow: GET, POST, PATCH, DELETE');
+        header('Allow: GET, POST, PATCH, DELETE, OPTIONS');
         fail(405, 'Unsupported method');
 }
 
@@ -114,7 +117,19 @@ function require_id_and_password(): array {
     parse_str($_SERVER['QUERY_STRING'] ?? '', $query);
     $id = require_valid_id($query['id'] ?? null);
 
-    $password = $_SERVER['HTTP_PASSWORD'] ?? null;
+    $password = $_SERVER['HTTP_PASSWORD'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+    if (!is_string($password) || $password === '') {
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            foreach ($headers as $k => $v) {
+                if (strcasecmp((string)$k, 'Password') === 0 && is_string($v) && $v !== '') {
+                    $password = $v;
+                    break;
+                }
+            }
+        }
+    }
+
     if (!is_string($password) || $password === '') {
         fail(400, 'No valid id or password provided');
     }
