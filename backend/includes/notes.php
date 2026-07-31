@@ -12,7 +12,7 @@ define('DATA_DIR', dirname(__DIR__) . '/data');
 // anything else is rejected outright, before it ever touches the filesystem.
 const ID_PATTERN = '/^[a-f0-9]{32}$/';
 
-const MAX_CONTENT_BYTES = 65536; // 64 KiB
+const MAX_CONTENT_BYTES = 262144; // 256 KiB
 const MAX_REPORT_MESSAGE_BYTES = 1000;
 const MAX_REPORT_BODY_BYTES = 8192; // headroom above the message cap for id/reason/JSON overhead
 

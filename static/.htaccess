@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Rewrite /share/ to /share.php, preserving the query string
+RewriteRule ^share/?$ share.php [QSA,L]
+
+# Rewrite /report/ to /report.php, preserving the query string
+RewriteRule ^report/?$ report.php [QSA,L]
+
+# Deny access to the data and includes directories
+RewriteRule ^(?:data|includes)\b.* - [F,L]

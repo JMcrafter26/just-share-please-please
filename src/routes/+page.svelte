@@ -53,7 +53,7 @@
 
 		// share.php lives at the webroot, right next to this page - see
 		// ../backend in the project for its source.
-		const url = id ? `/share.php?id=${encodeURIComponent(id)}` : '/index.md';
+		const url = id ? `./share?id=${encodeURIComponent(id)}` : './index.md';
 		let text;
 		try {
 			const res = await fetch(url);
@@ -110,7 +110,7 @@
 		reportStatus = 'sending';
 		reportError = '';
 		try {
-			const res = await fetch('/report.php', {
+			const res = await fetch('./report', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ id: currentId, reason: reportReason, message: reportMessage })
