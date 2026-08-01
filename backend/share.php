@@ -35,10 +35,9 @@ switch ($_SERVER['REQUEST_METHOD'] ?? '') {
 function handle_get(): void {
     // --- Cap PoW gate ---
     // The session flag 'cap_verified' is set by POST /cap/redeem.
-    // We allow 1 hour of grace before requiring a fresh solve.
-    $verifiedAt = (int) ($_SESSION['cap_verified_at'] ?? 0);
-    $verified   = ($_SESSION['cap_verified'] ?? false) === true
-                  && (time() - $verifiedAt) < 3600;
+    // The session is consumed after one successful GET so refreshes must
+    // solve Cap again instead of reusing the previous verification.
+    $verified = ($_SESSION['cap_verified'] ?? false) === true;
 
     if (!$verified) {
         header('Content-Type: application/json');
@@ -65,6 +64,12 @@ function handle_get(): void {
     // client-side, through markdown-it into a DOMPurify-sanitized fragment.
     header('Content-Type: text/plain; charset=utf-8');
     echo $content;
+
+    // Consume the verification so the same solve cannot be replayed on a
+    // later refresh.
+    $_SESSION['cap_verified'] = false;
+    unset($_SESSION['cap_verified_at']);
+    session_write_close();
 }
 
 function handle_post(): void {
