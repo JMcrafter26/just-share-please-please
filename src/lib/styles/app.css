@@ -317,21 +317,31 @@ input[type=checkbox]:checked:after {
     opacity: 0;
 }
 
-.cap-bar-track {
+.cap-bar-progress {
     width: 50px;
-    height: 4px;
-    background-color: rgba(34, 34, 34, 0.12);
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    background-color: #f2f2f2;
     border-radius: 9999px;
     overflow: hidden;
 }
 
-.cap-bar {
-    height: 100%;
-    background-color: #222222;
-    opacity: 0.55;
+.cap-bar-progress::-webkit-progress-bar {
+    background-color: #f2f2f2;
+    border-radius: 9999px;
+}
+
+.cap-bar-progress::-webkit-progress-value {
+    background-color: #101010;
     border-radius: 9999px;
     transition: width 0.2s ease-out;
-    max-width: 100%;
+}
+
+.cap-bar-progress::-moz-progress-bar {
+    background-color: #101010;
+    border-radius: 9999px;
 }
 
 .cap-bar-label {
@@ -344,6 +354,29 @@ input[type=checkbox]:checked:after {
 @keyframes cap-label-fade-in {
     from { opacity: 0; transform: translateY(-3px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* dark mode */
+@media (prefers-color-scheme: dark) {
+    .cap-bar-progress {
+        background-color: #242424;
+    }
+
+    .cap-bar-progress::-webkit-progress-bar {
+        background-color: #101010;
+    }
+
+    .cap-bar-progress::-webkit-progress-value {
+        background-color: #f2f2f2;
+    }
+
+    .cap-bar-progress::-moz-progress-bar {
+        background-color: #f2f2f2;
+    }
+
+    .cap-bar-label {
+        color: rgba(255, 255, 255, 0.5);
+    }
 }
 
 /* ---- Report form Cap PoW progress bar ---- */

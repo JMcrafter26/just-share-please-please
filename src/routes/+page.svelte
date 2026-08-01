@@ -20,7 +20,8 @@
 	let currentId = $state(undefined);
 	/** current raw markdown source, kept so the download/Obsidian links can use it */
 	let rawContent = $state('');
-	let bodyHtml = $state('<div class="center-message"><p>Loading...</p></div>');
+	let bodyHtml = $state('');
+	let pageLoading = $state(true);
 	let pageTitle = $state('Just Share Please');
 	let mainEl;
 
@@ -77,6 +78,19 @@
 		// Show reassurance label only if solving takes >2 s
 		_capLabelTimer = setTimeout(() => { capShowLabel = true; }, 2000);
 
+	
+	// simulate fake progress for now, since we don't have a real Cap PoW implementation yet
+		// await new Promise((resolve) => {
+		// 	const interval = setInterval(() => {
+		// 		capProgress += 5;
+		// 		if (capProgress >= 100) {
+		// 			clearInterval(interval);
+		// 			resolve(undefined);
+		// 		}
+		// 	}, 100);
+		// });
+	
+
 		try {
 			const cap = new Cap({ apiEndpoint: CAP_ENDPOINT });
 
@@ -93,6 +107,7 @@
 			clearTimeout(_capLabelTimer);
 			capProgress = 100;
 
+
 			capSessionOk = true;
 			capStatus = 'done';
 			// Fade bar out shortly after
@@ -108,64 +123,66 @@
 	async function display() {
 		const id = getId();
 		currentId = id;
+		pageLoading = true;
 
-		// Only shared notes (id != null) are protected by Cap PoW.
-		// index.md is public.
-		if (id && !capSessionOk) {
-			bodyHtml = '';
-			await solveCap();
-			if (!capSessionOk) return; // solveCap already set error html
-		} else {
-			bodyHtml = '<div class="center-message"><p>Loading...</p></div>';
-		}
-
-		// share.php lives at the webroot, right next to this page - see
-		// ../backend in the project for its source.
-		const url = id ? `./share?id=${encodeURIComponent(id)}` : './index.md';
-		let text;
 		try {
-			const res = await fetch(url, { credentials: 'include' });
-			if (res.status === 403) {
-				// Session may have expired — reset and retry with fresh PoW
-				const json = await res.json().catch(() => ({}));
-				if (json.error === 'cap_required') {
-					capSessionOk = false;
-					await solveCap();
-					if (!capSessionOk) return;
-					// Retry fetch after fresh verification
-					const retry = await fetch(url, { credentials: 'include' });
-					if (!retry.ok) throw new Error(`${retry.status} ${retry.statusText}`);
-					text = await retry.text();
-				} else {
-					throw new Error(`403 Forbidden`);
-				}
-			} else if (!res.ok) {
-				throw new Error(`${res.status} ${res.statusText}`);
-			} else {
-				text = await res.text();
+			// Only shared notes (id != null) are protected by Cap PoW.
+			// index.md is public.
+			if (id && !capSessionOk) {
+				await solveCap();
+				if (!capSessionOk) return; // solveCap already set error html
 			}
-		} catch (err) {
-			bodyHtml = `<div class="center-message"><p>Error loading shared note with id <code>${escapeHtml(
-				id ?? ''
-			)}</code>: <code>${escapeHtml(String(err.message ?? err))}</code></p><p><a href="./">Home</a></p></div>`;
-			return;
-		}
 
-		rawContent = text;
-		bodyHtml = DOMPurify.sanitize(md.render(text));
+			// share.php lives at the webroot, right next to this page - see
+			// ../backend in the project for its source.
+			const url = id ? `./share?id=${encodeURIComponent(id)}` : './index.md';
+			let text;
+			try {
+				const res = await fetch(url, { credentials: 'include' });
+				if (res.status === 403) {
+					// Session may have expired — reset and retry with fresh PoW
+					const json = await res.json().catch(() => ({}));
+					if (json.error === 'cap_required') {
+						capSessionOk = false;
+						await solveCap();
+						if (!capSessionOk) return;
+						// Retry fetch after fresh verification
+						const retry = await fetch(url, { credentials: 'include' });
+						if (!retry.ok) throw new Error(`${retry.status} ${retry.statusText}`);
+						text = await retry.text();
+					} else {
+						throw new Error(`403 Forbidden`);
+					}
+				} else if (!res.ok) {
+					throw new Error(`${res.status} ${res.statusText}`);
+				} else {
+					text = await res.text();
+				}
+			} catch (err) {
+				bodyHtml = `<div class="center-message"><p>Error loading shared note with id <code>${escapeHtml(
+					id ?? ''
+				)}</code>: <code>${escapeHtml(String(err.message ?? err))}</code></p><p><a href="./">Home</a></p></div>`;
+				return;
+			}
 
-		await tick();
+			rawContent = text;
+			bodyHtml = DOMPurify.sanitize(md.render(text));
 
-		const firstHeading = mainEl?.querySelector('h1, h2, h3, h4, h5, h6');
-		if (firstHeading) {
-			let heading = firstHeading.textContent?.trim() ?? '';
-			if (heading.endsWith('#')) heading = heading.slice(0, -1).trimEnd();
-			if (heading) pageTitle = heading;
-		}
+			await tick();
 
-		if (window.location.hash) {
-			const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
-			target?.scrollIntoView();
+			const firstHeading = mainEl?.querySelector('h1, h2, h3, h4, h5, h6');
+			if (firstHeading) {
+				let heading = firstHeading.textContent?.trim() ?? '';
+				if (heading.endsWith('#')) heading = heading.slice(0, -1).trimEnd();
+				if (heading) pageTitle = heading;
+			}
+
+			if (window.location.hash) {
+				const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+				target?.scrollIntoView();
+			}
+		} finally {
+			pageLoading = false;
 		}
 	}
 
@@ -276,11 +293,13 @@
 </a>
 
 <!-- Cap PoW progress bar — centered, 50px wide, completely rounded -->
-{#if capStatus === 'solving' || capStatus === 'done'}
+{#if pageLoading || capStatus === 'solving' || capStatus === 'done'}
 	<div class="cap-bar-wrap" class:cap-bar-done={capStatus === 'done'}>
-		<div class="cap-bar-track">
-			<div class="cap-bar" style="width: {capProgress}%"></div>
-		</div>
+		{#if pageLoading && capStatus === 'idle'}
+			<progress class="cap-bar-progress" max="100"></progress>
+		{:else}
+			<progress class="cap-bar-progress" value={capProgress} max="100"></progress>
+		{/if}
 		{#if capShowLabel}
 			<span class="cap-bar-label">Loading…</span>
 		{/if}
