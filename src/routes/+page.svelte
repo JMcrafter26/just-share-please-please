@@ -33,9 +33,6 @@
 	/** Whether to show the reassurance label (only after >2 s hang) */
 	let capShowLabel = $state(false);
 	let _capLabelTimer = null;
-	// Session flag: true if the server has already accepted our PoW this session.
-	// We reset it whenever the server returns 403 cap_required.
-	let capSessionOk = $state(false);
 
 	let reportOpen = $state(false);
 	let reportReason = $state(REPORT_REASONS[0].value);
@@ -67,8 +64,8 @@
 
 	/**
 	 * Solves the Cap PoW challenge and establishes the session on the PHP backend.
-	 * cap.solve() internally calls /cap/challenge + /cap/redeem for us,
-	 * setting the PHP session cookie on successful redeem.
+	 * cap.solve() internally calls /cap/challenge + /cap/redeem for us and
+	 * returns a one-time verification token.
 	 */
 	async function solveCap() {
 		capStatus = 'solving';
@@ -101,22 +98,20 @@
 			cap.addEventListener?.('progress', onProgress);
 
 			// cap.solve() does challenge + redeem internally via /cap/challenge and /cap/redeem
-			await cap.solve();
+			const { token } = await cap.solve();
 
 			cap.removeEventListener?.('progress', onProgress);
 			clearTimeout(_capLabelTimer);
 			capProgress = 100;
-
-
-			capSessionOk = true;
 			capStatus = 'done';
 			// Fade bar out shortly after
 			setTimeout(() => { if (capStatus === 'done') capStatus = 'idle'; }, 500);
+			return token;
 		} catch (err) {
 			clearTimeout(_capLabelTimer);
 			capStatus = 'error';
-			capSessionOk = false;
 			bodyHtml = `<div class="center-message"><p>Verification failed. Please <a href="javascript:location.reload()">reload</a> and try again.</p></div>`;
+			return undefined;
 		}
 	}
 
@@ -128,26 +123,29 @@
 		try {
 			// Only shared notes (id != null) are protected by Cap PoW.
 			// index.md is public.
-			if (id && !capSessionOk) {
-				await solveCap();
-				if (!capSessionOk) return; // solveCap already set error html
+			let capToken = '';
+			if (id) {
+				capToken = await solveCap() ?? '';
+				if (!capToken) return; // solveCap already set error html
 			}
 
 			// share.php lives at the webroot, right next to this page - see
 			// ../backend in the project for its source.
-			const url = id ? `./share?id=${encodeURIComponent(id)}` : './index.md';
+			const url = id
+				? `./share?id=${encodeURIComponent(id)}&cap-token=${encodeURIComponent(capToken)}`
+				: './index.md';
 			let text;
 			try {
-				const res = await fetch(url, { credentials: 'include' });
+				const res = await fetch(url, { credentials: 'omit' });
 				if (res.status === 403) {
 					// Session may have expired — reset and retry with fresh PoW
 					const json = await res.json().catch(() => ({}));
 					if (json.error === 'cap_required') {
-						capSessionOk = false;
-						await solveCap();
-						if (!capSessionOk) return;
+						capToken = await solveCap() ?? '';
+						if (!capToken) return;
 						// Retry fetch after fresh verification
-						const retry = await fetch(url, { credentials: 'include' });
+						const retryUrl = `./share?id=${encodeURIComponent(id ?? '')}&cap-token=${encodeURIComponent(capToken)}`;
+						const retry = await fetch(retryUrl, { credentials: 'omit' });
 						if (!retry.ok) throw new Error(`${retry.status} ${retry.statusText}`);
 						text = await retry.text();
 					} else {

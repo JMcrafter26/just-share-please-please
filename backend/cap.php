@@ -20,7 +20,7 @@ $capServer = new Cap([
     'tokenVerifyOnce' => true,
     'challengeExpires' => 300,
     'tokenExpires' => 600,
-    'bruteForcePenalty' => 0, // Rate limiting handled at app layer if needed
+    'bruteForcePenalty' => 60,
     'storage' => $storage
 ]);
 
@@ -56,14 +56,6 @@ switch ($_SERVER['REQUEST_METHOD'] ?? '') {
 
             try {
                 $result = $capServer->redeemChallenge($input, $clientIP);
-
-                if (!empty($result['success'])) {
-                    if (session_status() === PHP_SESSION_NONE) {
-                        session_start();
-                    }
-                    $_SESSION['cap_verified'] = true;
-                    $_SESSION['cap_verified_at'] = time();
-                }
 
                 echo json_encode($result);
             } catch (CapException $e) {

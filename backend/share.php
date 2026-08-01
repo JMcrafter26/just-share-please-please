@@ -3,13 +3,33 @@
 declare(strict_types=1);
 
 require __DIR__ . '/includes/notes.php';
+require __DIR__ . '/includes/capito/autoload.php';
 
-// Start session early — needed for Cap PoW gate on GET
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+use Capito\CapPhpServer\Cap;
+use Capito\CapPhpServer\RateLimiter;
+use Capito\CapPhpServer\Storage\FileStorage;
 
 send_common_headers();
+
+function note_mutation_rate_limit(string $action): void {
+    static $rateLimiter = null;
+
+    if ($rateLimiter === null) {
+        $rateLimiter = new RateLimiter(new FileStorage(['path' => DATA_DIR . '/cap_storage.json']));
+    }
+
+    $clientIp = client_ip();
+    $limits = [
+        'upload' => [8, 600, 600], // 8 uploads per 10 minutes, 10 minute penalty
+        'update' => [20, 600, 600], // 20 updates per 10 minutes, 10 minute penalty
+        'delete' => [10, 600, 600], // 10 deletes per 10 minutes, 10 minute penalty
+    ];
+
+    [$limit, $window, $penalty] = $limits[$action] ?? $limits['update'];
+    if (!$rateLimiter->allow($clientIp, $limit, $window, $penalty)) {
+        fail(429, 'Too many requests - please try again later');
+    }
+}
 
 switch ($_SERVER['REQUEST_METHOD'] ?? '') {
     case 'OPTIONS':
@@ -33,19 +53,24 @@ switch ($_SERVER['REQUEST_METHOD'] ?? '') {
 }
 
 function handle_get(): void {
-    // --- Cap PoW gate ---
-    // The session flag 'cap_verified' is set by POST /cap/redeem.
-    // The session is consumed after one successful GET so refreshes must
-    // solve Cap again instead of reusing the previous verification.
-    $verified = ($_SESSION['cap_verified'] ?? false) === true;
-
-    if (!$verified) {
+    $capToken = trim((string) ($_GET['cap-token'] ?? ''));
+    if ($capToken === '') {
         header('Content-Type: application/json');
         http_response_code(403);
         echo json_encode(['error' => 'cap_required']);
         exit;
     }
-    // --- end Cap gate ---
+
+    $storage = new FileStorage(['path' => DATA_DIR . '/cap_storage.json']);
+    $capServer = new Cap(['storage' => $storage]);
+    $validation = $capServer->validateToken($capToken);
+
+    if (empty($validation['success'])) {
+        header('Content-Type: application/json');
+        http_response_code(403);
+        echo json_encode(['error' => 'cap_required']);
+        exit;
+    }
 
     parse_str($_SERVER['QUERY_STRING'] ?? '', $query);
     $id = require_valid_id($query['id'] ?? null);
@@ -63,16 +88,12 @@ function handle_get(): void {
     // interpreted as HTML by a browser (stored XSS). Rendering happens
     // client-side, through markdown-it into a DOMPurify-sanitized fragment.
     header('Content-Type: text/plain; charset=utf-8');
+    header('Cache-Control: no-store');
     echo $content;
-
-    // Consume the verification so the same solve cannot be replayed on a
-    // later refresh.
-    $_SESSION['cap_verified'] = false;
-    unset($_SESSION['cap_verified_at']);
-    session_write_close();
 }
 
 function handle_post(): void {
+    note_mutation_rate_limit('upload');
     $content = require_note_content(read_json_body(MAX_CONTENT_BYTES));
 
     try {
@@ -100,6 +121,7 @@ function handle_post(): void {
 }
 
 function handle_patch(): void {
+    note_mutation_rate_limit('update');
     [$id, $password] = require_id_and_password();
     check_password($id, $password);
 
@@ -110,6 +132,7 @@ function handle_patch(): void {
 }
 
 function handle_delete(): void {
+    note_mutation_rate_limit('delete');
     [$id, $password] = require_id_and_password();
     check_password($id, $password);
 
