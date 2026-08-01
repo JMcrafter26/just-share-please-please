@@ -152,3 +152,5 @@ vite.config.ts.timestamp-*
 *.tmp
 *.tmp.*
 temp
+
+release/

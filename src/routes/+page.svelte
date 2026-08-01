@@ -67,7 +67,7 @@
 	}
 
 	function capRateLimitMessage() {
-		return '<div class="center-message"><p>Verification is temporarily rate-limited. Please wait a few minutes and try again.</p></div>';
+		return '<div class="center-message"><p>Hold on, you are being too fast. Slow down, get a cup of coffee and try again later.</p></div>';
 	}
 
 	/**
