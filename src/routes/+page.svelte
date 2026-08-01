@@ -325,8 +325,8 @@
 			- <button type="button" class="link-button" onclick={openReport}>Report</button>
 		{/if}
 		<br />
-				Created using <a href="./">Just Share Please</a> for
-		<a href="https://obsidian.md">Obsidian</a>
+				Created using <a href="https://github.com/JMcrafter26/just-share-please-please" target="_blank" rel="noopener noreferrer">Just Share Please</a> for
+		<a href="https://obsidian.md" target="_blank" rel="noopener noreferrer">Obsidian</a>
 		- <button type="button" class="link-button" onclick={() => (tosOpen = true)}>Terms of Service</button>
 		- <button type="button" class="link-button" onclick={() => (privacyOpen = true)}>Privacy Policy</button>
 	</div>
