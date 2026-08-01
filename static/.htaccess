@@ -9,5 +9,9 @@ RewriteRule ^report/?$ report.php [QSA,L]
 # Rewrite /delete/ to /delete.php, preserving the query string (admin only - token protected)
 RewriteRule ^delete/?$ delete.php [QSA,L]
 
+# Cap PoW endpoints (challenge + redeem)
+RewriteRule ^cap/challenge/?$ cap.php?route=challenge [QSA,L]
+RewriteRule ^cap/redeem/?$    cap.php?route=redeem    [QSA,L]
+
 # Deny access to the data and includes directories
 RewriteRule ^(?:data|includes)\b.* - [F,L]

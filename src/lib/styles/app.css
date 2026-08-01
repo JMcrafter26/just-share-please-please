@@ -297,3 +297,75 @@ input[type=checkbox]:checked:after {
         font-size: 0.8rem;
     }
 }
+
+/* ---- Cap PoW progress bar (centered, 50px wide, completely rounded) ---- */
+.cap-bar-wrap {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.cap-bar-wrap.cap-bar-done {
+    opacity: 0;
+}
+
+.cap-bar-track {
+    width: 50px;
+    height: 4px;
+    background-color: rgba(34, 34, 34, 0.12);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.cap-bar {
+    height: 100%;
+    background-color: #222222;
+    opacity: 0.55;
+    border-radius: 9999px;
+    transition: width 0.2s ease-out;
+    max-width: 100%;
+}
+
+.cap-bar-label {
+    font-size: 0.85rem;
+    color: rgba(34, 34, 34, 0.5);
+    font-family: "Inter", sans-serif;
+    animation: cap-label-fade-in 0.3s ease;
+}
+
+@keyframes cap-label-fade-in {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Report form Cap PoW progress bar ---- */
+.report-cap-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0 4px;
+}
+
+.report-cap-track {
+    width: 50px;
+    height: 4px;
+    background-color: rgba(34, 34, 34, 0.12);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.report-cap-bar {
+    height: 100%;
+    background-color: #222222;
+    opacity: 0.55;
+    border-radius: 9999px;
+    transition: width 0.2s ease-out;
+    max-width: 100%;
+}

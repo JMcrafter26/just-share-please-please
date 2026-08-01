@@ -2,6 +2,10 @@
 	import { onMount } from 'svelte';
 	import DOMPurify from 'dompurify';
 	import { createMarkdownRenderer } from '$lib/markdown';
+	import "cap-widget";
+	
+	/** Base URL for the self-hosted Cap endpoints (same origin, routed via .htaccess) */
+	const CAP_ENDPOINT = './cap/';
 
 	const REPORT_REASONS = [
 		{ value: 'spam', label: 'Spam' },
@@ -20,12 +24,27 @@
 	let pageTitle = $state('Just Share Please');
 	let mainEl;
 
+	// ---- Cap PoW state ----
+	/** @type {'idle' | 'solving' | 'done' | 'error'} */
+	let capStatus = $state('idle');
+	/** 0–100 progress percentage driven by cap widget events */
+	let capProgress = $state(0);
+	/** Whether to show the reassurance label (only after >2 s hang) */
+	let capShowLabel = $state(false);
+	let _capLabelTimer = null;
+	// Session flag: true if the server has already accepted our PoW this session.
+	// We reset it whenever the server returns 403 cap_required.
+	let capSessionOk = $state(false);
+
 	let reportOpen = $state(false);
 	let reportReason = $state(REPORT_REASONS[0].value);
 	let reportMessage = $state('');
-	/** @type {'idle' | 'sending' | 'done' | 'error'} */
+	/** @type {'idle' | 'solving' | 'sending' | 'done' | 'error'} */
 	let reportStatus = $state('idle');
 	let reportError = $state('');
+	/** Cap token obtained after solving PoW for the report form */
+	let reportCapToken = $state('');
+	let reportCapProgress = $state(0);
 
 	let tosOpen = $state(false);
 	let privacyOpen = $state(false);
@@ -45,19 +64,86 @@
 		return hash.substring(1, dash > 0 ? dash : hash.length);
 	}
 
+	/**
+	 * Solves the Cap PoW challenge and establishes the session on the PHP backend.
+	 * cap.solve() internally calls /cap/challenge + /cap/redeem for us,
+	 * setting the PHP session cookie on successful redeem.
+	 */
+	async function solveCap() {
+		capStatus = 'solving';
+		capProgress = 0;
+		capShowLabel = false;
+		clearTimeout(_capLabelTimer);
+		// Show reassurance label only if solving takes >2 s
+		_capLabelTimer = setTimeout(() => { capShowLabel = true; }, 2000);
+
+		try {
+			const cap = new Cap({ apiEndpoint: CAP_ENDPOINT });
+
+			// Listen to solve progress from the Web Worker
+			const onProgress = (e) => {
+				capProgress = Math.round((e.detail?.progress ?? 0) * 100);
+			};
+			cap.addEventListener?.('progress', onProgress);
+
+			// cap.solve() does challenge + redeem internally via /cap/challenge and /cap/redeem
+			await cap.solve();
+
+			cap.removeEventListener?.('progress', onProgress);
+			clearTimeout(_capLabelTimer);
+			capProgress = 100;
+
+			capSessionOk = true;
+			capStatus = 'done';
+			// Fade bar out shortly after
+			setTimeout(() => { if (capStatus === 'done') capStatus = 'idle'; }, 500);
+		} catch (err) {
+			clearTimeout(_capLabelTimer);
+			capStatus = 'error';
+			capSessionOk = false;
+			bodyHtml = `<div class="center-message"><p>Verification failed. Please <a href="javascript:location.reload()">reload</a> and try again.</p></div>`;
+		}
+	}
+
 	async function display() {
-		bodyHtml = '<div class="center-message"><p>Loading...</p></div>';
 		const id = getId();
 		currentId = id;
+
+		// Only shared notes (id != null) are protected by Cap PoW.
+		// index.md is public.
+		if (id && !capSessionOk) {
+			bodyHtml = '';
+			await solveCap();
+			if (!capSessionOk) return; // solveCap already set error html
+		} else {
+			bodyHtml = '<div class="center-message"><p>Loading...</p></div>';
+		}
 
 		// share.php lives at the webroot, right next to this page - see
 		// ../backend in the project for its source.
 		const url = id ? `./share?id=${encodeURIComponent(id)}` : './index.md';
 		let text;
 		try {
-			const res = await fetch(url);
-			if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-			text = await res.text();
+			const res = await fetch(url, { credentials: 'include' });
+			if (res.status === 403) {
+				// Session may have expired — reset and retry with fresh PoW
+				const json = await res.json().catch(() => ({}));
+				if (json.error === 'cap_required') {
+					capSessionOk = false;
+					await solveCap();
+					if (!capSessionOk) return;
+					// Retry fetch after fresh verification
+					const retry = await fetch(url, { credentials: 'include' });
+					if (!retry.ok) throw new Error(`${retry.status} ${retry.statusText}`);
+					text = await retry.text();
+				} else {
+					throw new Error(`403 Forbidden`);
+				}
+			} else if (!res.ok) {
+				throw new Error(`${res.status} ${res.statusText}`);
+			} else {
+				text = await res.text();
+			}
 		} catch (err) {
 			bodyHtml = `<div class="center-message"><p>Error loading shared note with id <code>${escapeHtml(
 				id ?? ''
@@ -109,13 +195,36 @@
 
 	async function submitReport() {
 		if (!currentId) return;
-		reportStatus = 'sending';
 		reportError = '';
+
+		// Solve PoW fresh for each report submission (token is single-use on the server)
+		reportStatus = 'solving';
+		reportCapProgress = 0;
+		try {
+			const reportCap = new Cap({ apiEndpoint: CAP_ENDPOINT });
+			const onProg = (e) => { reportCapProgress = Math.round((e.detail?.progress ?? 0) * 100); };
+			reportCap.addEventListener?.('progress', onProg);
+			const { token } = await reportCap.solve();
+			reportCap.removeEventListener?.('progress', onProg);
+			reportCapProgress = 100;
+			reportCapToken = token;
+		} catch {
+			reportError = 'Verification failed. Please try again.';
+			reportStatus = 'error';
+			return;
+		}
+
+		reportStatus = 'sending';
 		try {
 			const res = await fetch('./report', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ id: currentId, reason: reportReason, message: reportMessage })
+				body: JSON.stringify({
+					id: currentId,
+					reason: reportReason,
+					message: reportMessage,
+					'cap-token': reportCapToken,
+				})
 			});
 			if (res.status === 429) {
 				reportError = "You've already reported this note recently - thanks, it's in the queue.";
@@ -166,6 +275,18 @@
 	<span>Import into Obsidian</span>
 </a>
 
+<!-- Cap PoW progress bar — centered, 50px wide, completely rounded -->
+{#if capStatus === 'solving' || capStatus === 'done'}
+	<div class="cap-bar-wrap" class:cap-bar-done={capStatus === 'done'}>
+		<div class="cap-bar-track">
+			<div class="cap-bar" style="width: {capProgress}%"></div>
+		</div>
+		{#if capShowLabel}
+			<span class="cap-bar-label">Loading…</span>
+		{/if}
+	</div>
+{/if}
+
 <div class="content">
 	<div id="main" bind:this={mainEl}>{@html bodyHtml}</div>
 	<div id="footer">
@@ -210,13 +331,20 @@
 					Additional details (optional)
 					<textarea bind:value={reportMessage} maxlength="1000" rows="3"></textarea>
 				</label>
+				{#if reportStatus === 'solving'}
+					<div class="report-cap-wrap">
+						<div class="report-cap-track">
+							<div class="report-cap-bar" style="width: {reportCapProgress}%"></div>
+						</div>
+					</div>
+				{/if}
 				{#if reportError}<p class="modal-error">{reportError}</p>{/if}
 				<div class="modal-actions">
-					<button type="button" onclick={closeReport} disabled={reportStatus === 'sending'}
+					<button type="button" onclick={closeReport} disabled={reportStatus === 'solving' || reportStatus === 'sending'}
 						>Cancel</button
 					>
-					<button type="button" onclick={submitReport} disabled={reportStatus === 'sending'}>
-						{reportStatus === 'sending' ? 'Sending…' : 'Submit report'}
+					<button type="button" onclick={submitReport} disabled={reportStatus === 'solving' || reportStatus === 'sending'}>
+						{reportStatus === 'solving' ? 'Verifying…' : reportStatus === 'sending' ? 'Sending…' : 'Submit report'}
 					</button>
 				</div>
 			{/if}

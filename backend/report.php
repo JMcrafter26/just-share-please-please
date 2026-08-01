@@ -5,6 +5,10 @@ declare(strict_types=1);
 require __DIR__ . '/includes/notes.php';
 require __DIR__ . '/includes/db.php';
 require __DIR__ . '/includes/notify.php';
+require __DIR__ . '/includes/capito/autoload.php';
+
+use Capito\CapPhpServer\Cap;
+use Capito\CapPhpServer\Storage\FileStorage;
 
 send_common_headers();
 require_method('POST');
@@ -32,6 +36,24 @@ function handle_report(): void {
     $db = get_reports_db();
 
     $body = read_json_body(MAX_REPORT_BODY_BYTES);
+
+    // --- CAPTCHA Verification ---
+    $capToken = trim($body['cap-token'] ?? '');
+    if (empty($capToken)) {
+        fail(400, 'CAPTCHA token missing');
+    }
+
+    try {
+        $storage = new FileStorage(['path' => DATA_DIR . '/cap_storage.json']);
+        $capServer = new Cap(['storage' => $storage]);
+        $val = $capServer->validateToken($capToken);
+        if (empty($val['success'])) {
+            fail(400, 'CAPTCHA verification failed: ' . ($val['message'] ?? 'Invalid token'));
+        }
+    } catch (\Exception $e) {
+        fail(400, 'CAPTCHA verification failed');
+    }
+    // --- End CAPTCHA Verification ---
 
     $noteId = require_valid_id($body['id'] ?? null);
     if (!note_exists($noteId)) {

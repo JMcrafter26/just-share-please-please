@@ -18,6 +18,7 @@
   "dependencies": {
     "@fontsource/inter": "^5.1.0",
     "@fontsource/jetbrains-mono": "^5.1.0",
+    "cap-widget": "^0.1.56",
     "dompurify": "^3.1.7",
     "highlight.js": "^11.10.0",
     "katex": "^0.16.11",

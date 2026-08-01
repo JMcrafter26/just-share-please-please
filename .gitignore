@@ -151,3 +151,4 @@ vite.config.ts.timestamp-*
 # temp
 *.tmp
 *.tmp.*
+temp

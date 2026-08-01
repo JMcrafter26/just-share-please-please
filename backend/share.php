@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 require __DIR__ . '/includes/notes.php';
 
+// Start session early — needed for Cap PoW gate on GET
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 send_common_headers();
 
 switch ($_SERVER['REQUEST_METHOD'] ?? '') {
@@ -28,6 +33,21 @@ switch ($_SERVER['REQUEST_METHOD'] ?? '') {
 }
 
 function handle_get(): void {
+    // --- Cap PoW gate ---
+    // The session flag 'cap_verified' is set by POST /cap/redeem.
+    // We allow 1 hour of grace before requiring a fresh solve.
+    $verifiedAt = (int) ($_SESSION['cap_verified_at'] ?? 0);
+    $verified   = ($_SESSION['cap_verified'] ?? false) === true
+                  && (time() - $verifiedAt) < 3600;
+
+    if (!$verified) {
+        header('Content-Type: application/json');
+        http_response_code(403);
+        echo json_encode(['error' => 'cap_required']);
+        exit;
+    }
+    // --- end Cap gate ---
+
     parse_str($_SERVER['QUERY_STRING'] ?? '', $query);
     $id = require_valid_id($query['id'] ?? null);
 
