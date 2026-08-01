@@ -62,6 +62,14 @@
 		return hash.substring(1, dash > 0 ? dash : hash.length);
 	}
 
+	function isCapRateLimitError(err) {
+		return /rate limit|too many challenge requests/i.test(String(err?.message ?? err));
+	}
+
+	function capRateLimitMessage() {
+		return '<div class="center-message"><p>Verification is temporarily rate-limited. Please wait a few minutes and try again.</p></div>';
+	}
+
 	/**
 	 * Solves the Cap PoW challenge and establishes the session on the PHP backend.
 	 * cap.solve() internally calls /cap/challenge + /cap/redeem for us and
@@ -110,7 +118,9 @@
 		} catch (err) {
 			clearTimeout(_capLabelTimer);
 			capStatus = 'error';
-			bodyHtml = `<div class="center-message"><p>Verification failed. Please <a href="javascript:location.reload()">reload</a> and try again.</p></div>`;
+			bodyHtml = isCapRateLimitError(err)
+				? capRateLimitMessage()
+				: `<div class="center-message"><p>Verification failed. Please <a href="javascript:location.reload()">reload</a> and try again.</p></div>`;
 			return undefined;
 		}
 	}
@@ -223,8 +233,10 @@
 			reportCap.removeEventListener?.('progress', onProg);
 			reportCapProgress = 100;
 			reportCapToken = token;
-		} catch {
-			reportError = 'Verification failed. Please try again.';
+		} catch (err) {
+			reportError = isCapRateLimitError(err)
+				? 'Verification is temporarily rate-limited. Please wait a few minutes and try again.'
+				: 'Verification failed. Please try again.';
 			reportStatus = 'error';
 			return;
 		}
