@@ -14,7 +14,7 @@ You can find this in the JSP plugin settings.
 
 To share a note, simply open the context menu on the note you want to share (or right-click it in the file list) and select "Share to JSP".
 
-![](https://raw.githubusercontent.com/Ellpeck/ObsidianJustSharePlease/main/media/share.png)
+![Share Screenshot](https://wsrv.nl/?url=https://raw.githubusercontent.com/Ellpeck/ObsidianJustSharePlease/main/media/share.png)
 
 The note will then be uploaded automatically, and a link to it will be copied to your clipboard.
 
@@ -22,10 +22,9 @@ The note will then be uploaded automatically, and a link to it will be copied to
 
 There are two ways to manage shared notes: you can open the context menu on a shared note like you would to share it, or you can open the Just Share view using the command palette.
 
-![](https://raw.githubusercontent.com/Ellpeck/ObsidianJustSharePlease/main/media/view.png)
+![View Screenshot](https://wsrv.nl/?url=https://raw.githubusercontent.com/Ellpeck/ObsidianJustSharePlease/main/media/view.png)
 
 Both allow a set of actions, including sharing the link, updating the share and deleting the share. When updating the share, the link will stay intact, but it will be updated with the note's new content.
-
 
 ## Disclaimer
 
