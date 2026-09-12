@@ -6,6 +6,10 @@ Just Share Please is an [Obsidian](https://obsidian.md) plugin that allows quick
 
 First of all, you will need to install the Just Share Please plugin in Obsidian, which you can find [on GitHub](https://github.com/Ellpeck/ObsidianJustSharePlease/releases). Then, you can get started right away!
 
+**Note**: To use this improved instance you will need to add the following url as the JSP Server: `https://ou0.cc/obsidian-share`
+
+You can find this in the JSP plugin settings.
+
 ### Sharing a Note
 
 To share a note, simply open the context menu on the note you want to share (or right-click it in the file list) and select "Share to JSP".
@@ -21,3 +25,12 @@ There are two ways to manage shared notes: you can open the context menu on a sh
 ![](https://raw.githubusercontent.com/Ellpeck/ObsidianJustSharePlease/main/media/view.png)
 
 Both allow a set of actions, including sharing the link, updating the share and deleting the share. When updating the share, the link will stay intact, but it will be updated with the note's new content.
+
+
+## Disclaimer
+
+By using this service you agree to the terms of service and privacy policy. You can find both of them bellow.
+
+We kept both documents short, transparent, and easy to read, and no, we don't sell your data. Just remember: anyone with your unique link can view that note, so avoid sharing sensitive information.
+
+Please also note that this service is an independent project and is not affiliated with, endorsed by, or sponsored by Obsidian or Dynalist Inc.

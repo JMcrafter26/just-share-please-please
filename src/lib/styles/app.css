@@ -13,6 +13,9 @@ code {
     font-variant-ligatures: none;
     border-radius: 5px;
     line-height: initial;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 img {
@@ -55,6 +58,31 @@ h1:hover .header-anchor, h2:hover .header-anchor, h3:hover .header-anchor, h4:ho
     max-width: 700px;
     margin: 40px auto 80px;
     line-height: 1.5;
+}
+
+.content, .modal-legal, .modal textarea {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+pre, pre code, .hljs {
+    white-space: pre;
+    word-break: normal;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+
+img, .hljs {
+    max-width: 100%;
+}
+
+table {
+    display: block;
+    max-width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .center-message {
@@ -298,7 +326,7 @@ input[type=checkbox]:checked:after {
     }
 }
 
-/* ---- Cap PoW progress bar (centered, 50px wide, completely rounded) ---- */
+/* ---- Cap PoW progress bar ---- */
 .cap-bar-wrap {
     position: fixed;
     top: 40%;
