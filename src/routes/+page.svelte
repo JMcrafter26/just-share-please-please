@@ -285,7 +285,7 @@
 			}
 
 			rawContent = text;
-			bodyHtml = DOMPurify.sanitize(md.render(text));
+			bodyHtml = DOMPurify.sanitize(md.render(text), { ADD_ATTR: ['target', 'rel'] });
 
 			await tick();
 			enhanceCodeBlocks();

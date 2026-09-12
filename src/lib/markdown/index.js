@@ -288,6 +288,22 @@ export function createMarkdownRenderer(getId) {
 	md.use(markdownItFootnote);
 	md.use(markdownItCheckbox);
 
+	// open external links in new tab
+	const defaultLinkOpen =
+		md.renderer.rules.link_open ||
+		function (tokens, idx, options, env, self) {
+			return self.renderToken(tokens, idx, options);
+		};
+	md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+		const href = tokens[idx].attrGet('href') || '';
+		const isExternal = /^(https?:)?\/\//i.test(href);
+		if (isExternal) {
+			tokens[idx].attrSet('target', '_blank');
+			tokens[idx].attrSet('rel', 'noopener noreferrer');
+		}
+		return defaultLinkOpen(tokens, idx, options, env, self);
+	};
+
 	const rulesToReplace = [
 		['footnote_ref', /href="#(fn\d+)"/, () => `href="#${getId() ?? ''}-$1"`],
 		['footnote_open', /id="(fn\d+)"/, () => `id="${getId() ?? ''}-$1"`],
