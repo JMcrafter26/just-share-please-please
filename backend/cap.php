@@ -12,15 +12,11 @@ send_common_headers();
 
 ensure_data_dir();
 
+$config = load_config();
+
 $storage = new FileStorage(['path' => DATA_DIR . '/cap_storage.json']);
 $capServer = new Cap([
-    'challengeCount' => 2,
-    'challengeSize' => 16,
-    'challengeDifficulty' => 2,
-    'tokenVerifyOnce' => true,
-    'challengeExpires' => 300,
-    'tokenExpires' => 600,
-    'bruteForcePenalty' => 60,
+    $config['CAP'],
     'storage' => $storage
 ]);
 
@@ -77,4 +73,15 @@ switch ($_SERVER['REQUEST_METHOD'] ?? '') {
         header('Allow: POST, OPTIONS');
         echo json_encode(['error' => 'Method Not Allowed']);
         exit;
+}
+
+
+
+function load_config(): array {
+    $path = __DIR__ . '/config.php';
+    if (!is_file($path)) {
+        // Fail closed rather than silently skipping notifications forever.
+        fail(500, 'Server is not configured');
+    }
+    return require $path;
 }

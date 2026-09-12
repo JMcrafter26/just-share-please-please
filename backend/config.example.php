@@ -34,4 +34,17 @@ return [
     // a notification actually gets sent.
     'max_reports_per_ip_per_hour' => 10,
     'max_reports_per_ip_per_note_per_day' => 1,
+
+    // CAP Settings
+    'CAP' => [
+        'challengeCount' => 2,
+        'challengeSize' => 16,
+        'challengeDifficulty' => 3,
+        'tokenVerifyOnce' => true,
+        'challengeExpires' => 300,
+        'tokenExpires' => 600,
+        'bruteForceLimit' => 10, // attempts
+        'bruteForceWindow' => 30, // seconds
+        'bruteForcePenalty' => 60, // seconds
+    ]
 ];
