@@ -154,3 +154,4 @@ vite.config.ts.timestamp-*
 temp
 
 release/
+*.patch
