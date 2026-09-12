@@ -81,8 +81,10 @@ h1:hover .header-anchor, h2:hover .header-anchor, h3:hover .header-anchor, h4:ho
 }
 
 .content {
-    max-width: 700px;
+    max-width: 850px !important;
     margin: 40px auto 80px;
+    padding: 0 16px;
+    
     line-height: 1.5;
 }
 
@@ -90,6 +92,13 @@ h1:hover .header-anchor, h2:hover .header-anchor, h3:hover .header-anchor, h4:ho
     max-width: 100%;
     overflow-wrap: anywhere;
     word-break: break-word;
+}
+
+@media (max-width: 600px) {
+    .content {
+        margin: 24px auto 60px;
+        padding: 0 16px;
+    }
 }
 
 pre, pre code, .hljs {
@@ -429,7 +438,6 @@ input[type=checkbox]:checked:after {
 
 .obsidian-top-button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
 }
 
 .obsidian-top-button .obsidian-label {
@@ -443,6 +451,7 @@ input[type=checkbox]:checked:after {
 .obsidian-top-button.obsidian-compact {
     justify-content: center;
     gap: 0;
+    padding: 10px;
     border-radius: 9999px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
 }
