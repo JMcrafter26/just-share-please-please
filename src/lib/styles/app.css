@@ -18,6 +18,32 @@ code {
     white-space: pre-wrap;
 }
 
+/* inline code */
+:not(pre) > code {
+    background-color: #edeff2;
+    border: 1px solid #dfe2e7;
+    padding: 1px 5px 2px;
+    font-size: 0.875em;
+    color: #1f2328;
+}
+
+pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+    :not(pre) > code {
+        background-color: #2c2c2c;
+        border-color: #3d3d3d;
+        color: #e6e6e6;
+    }
+}
+
+
 img {
     width: 100%;
     height: auto;
