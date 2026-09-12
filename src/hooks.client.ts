@@ -1,10 +1,10 @@
-import { PUBLIC_PLAUSIBLE_DOMAIN, PUBLIC_PLAUSIBLE_ENABLE, PUBLIC_PLAUSIBLE_ENDPOINT } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import { init } from '@plausible-analytics/tracker';
 
-if (PUBLIC_PLAUSIBLE_ENABLE === 'true' && PUBLIC_PLAUSIBLE_DOMAIN) {
+if (env.PUBLIC_PLAUSIBLE_ENABLE === 'true' && env.PUBLIC_PLAUSIBLE_DOMAIN) {
 	init({
-		domain: PUBLIC_PLAUSIBLE_DOMAIN,
-		...(PUBLIC_PLAUSIBLE_ENDPOINT ? { endpoint: PUBLIC_PLAUSIBLE_ENDPOINT } : {}),
+		domain: env.PUBLIC_PLAUSIBLE_DOMAIN,
+		...(env.PUBLIC_PLAUSIBLE_ENDPOINT ? { endpoint: env.PUBLIC_PLAUSIBLE_ENDPOINT } : {}),
 		captureOnLocalhost: false,
 		outboundLinks: true
 	});
