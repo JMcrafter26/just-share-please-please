@@ -430,3 +430,19 @@ input[type=checkbox]:checked:after {
     transition: width 0.2s ease-out;
     max-width: 100%;
 }
+
+/* ---- Wikilink ---- */
+.internal-link {
+}
+
+.internal-link.is-unresolved {
+	color: inherit;
+	opacity: 0.6;
+	text-decoration: underline dotted;
+	cursor: help;
+}
+
+.internal-link.is-unresolved.embed {
+	font-style: italic;
+	opacity: 0.5;
+}
