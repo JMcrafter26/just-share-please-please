@@ -78,11 +78,108 @@ img, .hljs {
     max-width: 100%;
 }
 
+/* ---- Tables: modern grid + smart h-scroll ---- */
 table {
     display: block;
+    width: max-content;
     max-width: 100%;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 1.5em 0;
+    scrollbar-width: thin;
+    scrollbar-color: #d0d7de transparent;
+    font-size: 0.93em;
+    line-height: 1.45;
+    border: 1px solid #dfe2e7;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+table th,
+table td {
+    padding: 10px 14px;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+    background-clip: padding-box;
+}
+
+table th:last-child,
+table td:last-child {
+    border-right: none;
+}
+
+table tr:last-child td {
+    border-bottom: none;
+}
+
+table th {
+    font-weight: 650;
+    font-size: 0.9em;
+    letter-spacing: 0.01em;
+    background: #f8f9fb;
+    border-bottom: 2px solid #d0d7de;
+    color: #111827;
+    white-space: nowrap;
+}
+
+table tr:nth-child(even) td {
+    background: #fcfcfd;
+}
+
+table tbody tr:hover td {
+    background: #f3f1ff;
+}
+
+/* Fallback first/last radius when table is block + scroll (no JS wrapper) */
+table tr:first-child th:first-child {
+    border-top-left-radius: 8px;
+}
+table tr:first-child th:last-child {
+    border-top-right-radius: 8px;
+}
+table tr:last-child td:first-child {
+    border-bottom-left-radius: 8px;
+}
+table tr:last-child td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+    table {
+        background: #1e1e1e;
+        border-color: #3a3a3a;
+        scrollbar-color: #404040 transparent;
+        box-shadow: none;
+    }
+
+    table th,
+    table td {
+        border-right-color: #333333;
+        border-bottom-color: #333333;
+    }
+
+    table th {
+        background: #252525;
+        border-bottom-color: #404040;
+        color: #e5e7eb;
+    }
+
+    table tr:nth-child(even) td {
+        background: #242424;
+    }
+
+    table tbody tr:hover td {
+        background: #2d2a3a;
+    }
 }
 
 .center-message {
