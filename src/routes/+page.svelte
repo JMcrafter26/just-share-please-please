@@ -47,7 +47,61 @@
 	let tosOpen = $state(false);
 	let privacyOpen = $state(false);
 
+	/** Unix timestamp (seconds) of last edit, null when not available or for index.md */
+	let lastEditedTs = $state(null);
+
 	const md = createMarkdownRenderer(() => currentId);
+
+	function parseLastEditedHeader(res) {
+		const raw = res.headers.get('X-Last-Edited') ?? res.headers.get('x-last-edited');
+		if (raw) {
+			const n = Number(raw);
+			if (!Number.isNaN(n) && n > 0) return n;
+		}
+		const lm = res.headers.get('Last-Modified');
+		if (lm) {
+			const t = Date.parse(lm);
+			if (!Number.isNaN(t)) return Math.floor(t / 1000);
+		}
+		return null;
+	}
+
+	function formatLastEdited(ts) {
+		if (ts == null) return '';
+		const nowSec = Date.now() / 1000;
+		const diff = nowSec - ts;
+		const absTs = ts * 1000;
+		// Relative for < 30 days, absolute otherwise
+		const MONTH_SEC = 30 * 24 * 60 * 60;
+		if (diff >= 0 && diff < MONTH_SEC) {
+			if (diff < 60) return 'just now';
+			if (diff < 3600) {
+				const m = Math.floor(diff / 60);
+				return `${m} minute${m === 1 ? '' : 's'} ago`;
+			}
+			if (diff < 86400) {
+				const h = Math.floor(diff / 3600);
+				return `${h} hour${h === 1 ? '' : 's'} ago`;
+			}
+			if (diff < 604800) {
+				const d = Math.floor(diff / 86400);
+				return `${d} day${d === 1 ? '' : 's'} ago`;
+			}
+			const w = Math.floor(diff / 604800);
+			// For 1-4 weeks show weeks
+			if (w < 5) return `${w} week${w === 1 ? '' : 's'} ago`;
+			const d2 = Math.floor(diff / 86400);
+			return `${d2} days ago`;
+		}
+		// Absolute: browser locale, e.g. Sep 12, 2026, 3:42 PM
+		try {
+			return new Date(absTs).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+		} catch {
+			return new Date(absTs).toLocaleString();
+		}
+	}
+
+	let lastEditedLabel = $derived(formatLastEdited(lastEditedTs));
 
 	/**
 	 * Parses the note id out of a location hash, same rule as before:
@@ -128,6 +182,7 @@
 	async function display() {
 		const id = getId();
 		currentId = id;
+		lastEditedTs = null;
 		pageLoading = true;
 
 		try {
@@ -157,6 +212,7 @@
 						const retryUrl = `./share?id=${encodeURIComponent(id ?? '')}&cap-token=${encodeURIComponent(capToken)}`;
 						const retry = await fetch(retryUrl, { credentials: 'omit' });
 						if (!retry.ok) throw new Error(`${retry.status} ${retry.statusText}`);
+						if (id) lastEditedTs = parseLastEditedHeader(retry);
 						text = await retry.text();
 					} else {
 						throw new Error(`403 Forbidden`);
@@ -164,6 +220,7 @@
 				} else if (!res.ok) {
 					throw new Error(`${res.status} ${res.statusText}`);
 				} else {
+					if (id) lastEditedTs = parseLastEditedHeader(res);
 					text = await res.text();
 				}
 			} catch (err) {
@@ -318,6 +375,11 @@
 
 <div class="content">
 	<div id="main" bind:this={mainEl}>{@html bodyHtml}</div>
+	{#if currentId && lastEditedTs}
+		<div class="last-edited" title={new Date(lastEditedTs * 1000).toLocaleString()}>
+			Last edited: {lastEditedLabel}
+		</div>
+	{/if}
 	<div id="footer">
 		<a href={downloadHref} download="{pageTitle}.md">Download Markdown</a> -
 		<a href={obsidianHref}>Import into Obsidian</a>

@@ -84,6 +84,14 @@ function handle_get(): void {
         fail(500, 'Internal Server Error');
     }
 
+    $lastEdited = get_last_edited_timestamp($id);
+    if ($lastEdited !== null) {
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s \G\M\T', $lastEdited));
+        header('X-Last-Edited: ' . $lastEdited);
+        // Expose custom header to the browser (CORS fetch)
+        header('Access-Control-Expose-Headers: Last-Modified, X-Last-Edited');
+    }
+
     // Always served as plain text so a note's own raw markdown can never be
     // interpreted as HTML by a browser (stored XSS). Rendering happens
     // client-side, through markdown-it into a DOMPurify-sanitized fragment.
@@ -106,9 +114,12 @@ function handle_post(): void {
     // The plaintext password is only ever transmitted once, right here.
     // Only a salted hash of it is persisted (see check_password()), so a
     // filesystem read of meta.json alone can't be used to hijack a note.
+    $now = time();
     $meta = json_encode([
         'id' => $id,
         'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+        'created_at' => $now,
+        'updated_at' => $now,
     ], JSON_THROW_ON_ERROR);
 
     if (file_put_contents(markdown_path($id), $content) === false
@@ -129,6 +140,7 @@ function handle_patch(): void {
     if (file_put_contents(markdown_path($id), $content) === false) {
         fail(500, 'Internal Server Error');
     }
+    touch_note_meta($id);
 }
 
 function handle_delete(): void {

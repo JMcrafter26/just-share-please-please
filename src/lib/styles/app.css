@@ -431,6 +431,21 @@ input[type=checkbox]:checked:after {
     max-width: 100%;
 }
 
+/* ---- Last edited ---- */
+.last-edited {
+	text-align: center;
+	margin: 32px 0 8px;
+	font-size: 0.82em;
+	color: rgba(34, 34, 34, 0.5);
+	font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+	.last-edited {
+		color: rgba(255, 255, 255, 0.5);
+	}
+}
+
 /* ---- Wikilink ---- */
 .internal-link {
 }

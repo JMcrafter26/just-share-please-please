@@ -87,6 +87,70 @@ function note_exists(string $id): bool
     return is_file(markdown_path($id));
 }
 
+function get_last_edited_timestamp(string $id): ?int
+{
+    $metaPath = meta_path($id);
+    if (is_file($metaPath)) {
+        $raw = @file_get_contents($metaPath);
+        if ($raw !== false) {
+            $meta = json_decode($raw, true);
+            if (is_array($meta)) {
+                if (isset($meta['updated_at']) && is_int($meta['updated_at'])) {
+                    return $meta['updated_at'];
+                }
+                if (isset($meta['updated_at']) && is_numeric($meta['updated_at'])) {
+                    return (int) $meta['updated_at'];
+                }
+                if (isset($meta['created_at']) && is_int($meta['created_at'])) {
+                    return $meta['created_at'];
+                }
+                if (isset($meta['created_at']) && is_numeric($meta['created_at'])) {
+                    return (int) $meta['created_at'];
+                }
+            }
+        }
+    }
+    $mdPath = markdown_path($id);
+    if (is_file($mdPath)) {
+        $mtime = @filemtime($mdPath);
+        if ($mtime !== false) {
+            return $mtime;
+        }
+    }
+    return null;
+}
+
+function touch_note_meta(string $id, ?array $existingMeta = null): void
+{
+    $now = time();
+    $metaPath = meta_path($id);
+    $meta = $existingMeta;
+
+    if ($meta === null && is_file($metaPath)) {
+        $raw = @file_get_contents($metaPath);
+        $decoded = $raw !== false ? json_decode($raw, true) : null;
+        $meta = is_array($decoded) ? $decoded : [];
+    }
+    if (!is_array($meta)) {
+        $meta = [];
+    }
+
+    if (!isset($meta['created_at']) || !is_numeric($meta['created_at'])) {
+        $mdPath = markdown_path($id);
+        $mtime = is_file($mdPath) ? @filemtime($mdPath) : false;
+        $meta['created_at'] = $mtime !== false ? $mtime : $now;
+    }
+    $meta['updated_at'] = $now;
+
+    // Preserve required fields if missing
+    if (!isset($meta['id'])) {
+        $meta['id'] = $id;
+    }
+
+    $json = json_encode($meta, JSON_THROW_ON_ERROR);
+    @file_put_contents($metaPath, $json, LOCK_EX);
+}
+
 /**
  * Reads the raw JSON request body, enforcing a hard byte cap on the read
  * itself (not just on the decoded value) so a caller can't exhaust memory
