@@ -20,7 +20,7 @@
     "@fontsource/jetbrains-mono": "^5.1.0",
     "@plausible-analytics/tracker": "^0.4.5",
     "cap-widget": "^0.1.56",
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.16",
     "highlight.js": "^11.10.0",
     "katex": "^0.16.11",
     "markdown-it": "^14.1.0",
